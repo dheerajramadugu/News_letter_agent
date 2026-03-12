@@ -1,68 +1,32 @@
 name: AI Radar Daily Digest
 
 on:
-  # Run every day at 10:00 AM CST (16:00 UTC)
   schedule:
-    - cron: "0 16 * * *"
-
-  # Allow manual trigger from the GitHub Actions UI
+    - cron: '0 7 * * *'
   workflow_dispatch:
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   send-digest:
-    name: Fetch, Summarise & Send
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      # ------------------------------------------------------------------ #
-      # 1. Checkout the repository                                          #
-      # ------------------------------------------------------------------ #
-      - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+      - name: Checkout repo
+        uses: actions/checkout@v6
 
-      # ------------------------------------------------------------------ #
-      # 2. Set up Python                                                    #
-      # ------------------------------------------------------------------ #
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5.4.0
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
-          cache: "pip"
+          python-version: '3.11'
 
-      # ------------------------------------------------------------------ #
-      # 3. Install dependencies                                             #
-      # ------------------------------------------------------------------ #
       - name: Install dependencies
-        run: pip install --upgrade pip && pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      # ------------------------------------------------------------------ #
-      # 4. Run the agent                                                    #
-      # ------------------------------------------------------------------ #
-      - name: Run AI Radar agent
+      - name: Fetch, Summarise & Send
         env:
-          GEMINI_API_KEY:        ${{ secrets.GEMINI_API_KEY }}
-          REDDIT_CLIENT_ID:      ${{ secrets.REDDIT_CLIENT_ID }}
-          REDDIT_CLIENT_SECRET:  ${{ secrets.REDDIT_CLIENT_SECRET }}
-          REDDIT_USER_AGENT:     ${{ secrets.REDDIT_USER_AGENT }}
-          BREVO_LOGIN:           ${{ secrets.BREVO_LOGIN }}
-          BREVO_SMTP_KEY:        ${{ secrets.BREVO_SMTP_KEY }}
-          BREVO_SENDER:          ${{ secrets.BREVO_SENDER }}
-          BREVO_RECIPIENT:       ${{ secrets.BREVO_RECIPIENT }}
+          GEMINI_API_KEY:     ${{ secrets.GEMINI_API_KEY }}
+          BREVO_SMTP_HOST:    ${{ secrets.BREVO_SMTP_HOST }}
+          BREVO_SMTP_PORT:    ${{ secrets.BREVO_SMTP_PORT }}
+          BREVO_SENDER_EMAIL: ${{ secrets.BREVO_SENDER_EMAIL }}
+          BREVO_SMTP_KEY:     ${{ secrets.BREVO_SMTP_KEY }}
+          GMAIL_RECIPIENT:    ${{ secrets.GMAIL_RECIPIENT }}
         run: python main.py
-
-      # ------------------------------------------------------------------ #
-      # 5. Upload the preview artifact (for debugging)                      #
-      # ------------------------------------------------------------------ #
-      - name: Upload HTML preview (if exists)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: digest-preview
-          path: output/preview.html
-          if-no-files-found: ignore
-          retention-days: 7

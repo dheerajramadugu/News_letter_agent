@@ -1,0 +1,63 @@
+name: AI Radar Daily Digest
+
+on:
+  # Run every day at 10:00 AM CST (16:00 UTC)
+  schedule:
+    - cron: "0 16 * * *"
+
+  # Allow manual trigger from the GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+  send-digest:
+    name: Fetch, Summarise & Send
+    runs-on: ubuntu-latest
+
+    steps:
+      # ------------------------------------------------------------------ #
+      # 1. Checkout the repository                                          #
+      # ------------------------------------------------------------------ #
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------ #
+      # 2. Set up Python                                                    #
+      # ------------------------------------------------------------------ #
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # ------------------------------------------------------------------ #
+      # 3. Install dependencies                                             #
+      # ------------------------------------------------------------------ #
+      - name: Install dependencies
+        run: pip install --upgrade pip && pip install -r requirements.txt
+
+      # ------------------------------------------------------------------ #
+      # 4. Run the agent                                                    #
+      # ------------------------------------------------------------------ #
+      - name: Run AI Radar agent
+        env:
+          GEMINI_API_KEY:        ${{ secrets.GEMINI_API_KEY }}
+          REDDIT_CLIENT_ID:      ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET:  ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USER_AGENT:     ${{ secrets.REDDIT_USER_AGENT }}
+          BREVO_LOGIN:           ${{ secrets.BREVO_LOGIN }}
+          BREVO_SMTP_KEY:        ${{ secrets.BREVO_SMTP_KEY }}
+          BREVO_SENDER:          ${{ secrets.BREVO_SENDER }}
+          BREVO_RECIPIENT:       ${{ secrets.BREVO_RECIPIENT }}
+        run: python main.py
+
+      # ------------------------------------------------------------------ #
+      # 5. Upload the preview artifact (for debugging)                      #
+      # ------------------------------------------------------------------ #
+      - name: Upload HTML preview (if exists)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-preview
+          path: output/preview.html
+          if-no-files-found: ignore
+          retention-days: 7

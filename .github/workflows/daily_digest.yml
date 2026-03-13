@@ -2,7 +2,7 @@ name: AI Radar Daily Digest
 
 on:
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '0 16 * * *'
   workflow_dispatch:
 
 jobs:
